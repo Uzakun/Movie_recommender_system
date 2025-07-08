@@ -13,7 +13,6 @@ A content-based movie recommendation system built with Python and Streamlit that
 - [Demo](#demo)
 - [Installation](#installation)
 - [Usage](#usage)
-- [How It Works](#how-it-works)
 - [Project Structure](#project-structure)
 - [Technologies Used](#technologies-used)
 - [Dataset](#dataset)
@@ -35,7 +34,7 @@ A content-based movie recommendation system built with Python and Streamlit that
 
 The application provides a simple interface where users can:
 1. Select a movie from the dropdown menu
-2. Click "Get Recommendations"
+2. Click "Get Recommendations."
 3. View 5 similar movies based on genre analysis
 
 ## 💻 Installation
@@ -77,25 +76,8 @@ streamlit run movie_recommender.py
 
 3. **Use the application**
    - Select a movie from the dropdown menu
-   - Click "Get Recommendations"
+   - Click "Get Recommendations."
    - View your personalized recommendations!
-
-## 🧠 How It Works
-
-### Algorithm Overview
-
-The system uses **Content-Based Filtering** with the following approach:
-
-1. **Feature Extraction**: Extracts genre information from movies
-2. **TF-IDF Vectorization**: Converts genres into numerical vectors
-3. **Cosine Similarity**: Calculates similarity between movie vectors
-4. **Recommendation Generation**: Returns top 5 most similar movies
-
-### Technical Details
-
-- **TF-IDF (Term Frequency-Inverse Document Frequency)**: Weighs the importance of each genre
-- **Cosine Similarity**: Measures the angle between movie genre vectors (0 = different, 1 = identical)
-- **Fallback Mechanism**: Shows popular movies when genre data is insufficient
 
 
 ## 🛠️ Technologies Used
@@ -119,7 +101,7 @@ requests==2.31.0
 
 ## 📊 Dataset
 
-This project uses the **MovieLens Small Dataset** which includes:
+This project uses the **MovieLens Small Dataset**, which includes:
 - 9,742 movies
 - 100,836 ratings
 - 610 users
@@ -130,13 +112,14 @@ The dataset is automatically downloaded from the official GroupLens repository o
 ## 📸 Screenshots
 
 ### Main Interface
-- Movie selection dropdown
-- Recommendation results
-- Genre information display
+![Screenshot (112)](https://github.com/user-attachments/assets/a06ea4f6-7ba2-41af-89c9-9eb7cb6d237a)
+![Screenshot (110)](https://github.com/user-attachments/assets/98628749-9776-43be-867d-8ede8219d4b5)
+
 
 ### Dataset Statistics
-- Total movies, users, and ratings
-- Genre distribution visualization
+![Screenshot (108)](https://github.com/user-attachments/assets/ba6344a6-f0d7-4612-9b9a-09bbeaa4c053)
+![Screenshot (113)](https://github.com/user-attachments/assets/79c6a472-b515-4e57-b94e-b9ae63a8e7a0)
+
 
 ## 🤝 Contributing
 
