@@ -17,9 +17,6 @@ A content-based movie recommendation system built with Python and Streamlit that
 - [Technologies Used](#technologies-used)
 - [Dataset](#dataset)
 - [Screenshots](#screenshots)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
 
 ## ✨ Features
 
@@ -120,39 +117,9 @@ The dataset is automatically downloaded from the official GroupLens repository o
 ![Screenshot (108)](https://github.com/user-attachments/assets/ba6344a6-f0d7-4612-9b9a-09bbeaa4c053)
 ![Screenshot (113)](https://github.com/user-attachments/assets/79c6a472-b515-4e57-b94e-b9ae63a8e7a0)
 
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Future Enhancements
-
-- [ ] Add collaborative filtering option
-- [ ] Implement hybrid recommendation system
-- [ ] Add movie posters and descriptions
-- [ ] Include user authentication
-- [ ] Add movie ratings visualization
-- [ ] Implement search functionality
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [GroupLens](https://grouplens.org/) for providing the MovieLens dataset
-- [Streamlit](https://streamlit.io/) for the amazing web framework
-- The open-source community for inspiration and resources
-
 ---
 
-<p align="center">Made with ❤️ by [Your Name]</p>
+<p align="center">Made with ❤️ by Uza</p>
 
 <p align="center">
   <a href="https://github.com/yourusername/movie-recommendation-system/issues">Report Bug</a>
