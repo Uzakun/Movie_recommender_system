@@ -120,9 +120,3 @@ The dataset is automatically downloaded from the official GroupLens repository o
 ---
 
 <p align="center">Made with ❤️ by Uza</p>
-
-<p align="center">
-  <a href="https://github.com/yourusername/movie-recommendation-system/issues">Report Bug</a>
-  ·
-  <a href="https://github.com/yourusername/movie-recommendation-system/issues">Request Feature</a>
-</p>
