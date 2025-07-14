@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
@@ -64,7 +63,7 @@ class ContentBasedRecommender:
             
             # Filter out movies with no genres and the movie itself
             valid_recommendations = []
-            for movie_idx, score in sim_scores[1:]:  # Skip first (itself)
+            for movie_idx, score in sim_scores[1:]:  
                 if self.movies_df.iloc[movie_idx]['genres'] != '(no genres listed)' and score > 0:
                     valid_recommendations.append(movie_idx)
                 if len(valid_recommendations) >= n:
@@ -84,7 +83,6 @@ class ContentBasedRecommender:
             return recommendations, None
             
         except Exception as e:
-            # Return popular movies as fallback
             movies_with_genres = self.movies_df[self.movies_df['genres'] != '(no genres listed)']
             if len(movies_with_genres) >= n:
                 return movies_with_genres.sample(n=n)[['movieId', 'title', 'genres']], "Showing popular movie recommendations"
@@ -116,7 +114,6 @@ def main():
     movie_title = st.selectbox(
         "Select or type a movie title:",
         options=movies['title'].tolist(),
-        help="Start typing to search for a movie"
     )
     
     if st.button("Get Recommendations", key="content"):
