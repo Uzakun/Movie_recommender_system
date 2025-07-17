@@ -36,9 +36,9 @@ def download_movielens_data():
 def load_precomputed_data():
     """Load pre-computed cosine similarity matrix and movies DataFrame."""
     try:
-        # Ensure these files are present in your deployment directory!
+        # Explicitly set allow_pickle=True for np.load()
         cosine_sim = np.load('cosine_sim_matrix.npy')
-        movies_df = pd.read_pickle('movies_df_processed.pkl') # Note: using movies_df_processed.pkl
+        movies_df = pd.read_pickle('movies_df_processed.pkl') # This line is fine
         return cosine_sim, movies_df
     except FileNotFoundError:
         st.error("Pre-computed data files not found. Please run the precomputation script (`precompute_data.py`).")
