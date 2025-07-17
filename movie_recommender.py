@@ -1,14 +1,15 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer # Still needed if you want to inspect genres
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
 import requests
 import zipfile
 import os
 import warnings
+import numpy as np # Import numpy for loading .npy
 warnings.filterwarnings('ignore')
 
-# Download MovieLens dataset
+# Download MovieLens dataset (still needed for movies.csv, but not for its processing if precomputed)
 @st.cache_data
 def download_movielens_data():
     """Download and extract MovieLens dataset"""
@@ -30,31 +31,32 @@ def download_movielens_data():
     
     return movies, ratings
 
-# Content-based recommender
+# Cached function to load pre-computed data
+@st.cache_resource
+def load_precomputed_data():
+    """Load pre-computed cosine similarity matrix and movies DataFrame."""
+    try:
+        # Ensure these files are present in your deployment directory!
+        cosine_sim = np.load('cosine_sim_matrix.npy')
+        movies_df = pd.read_pickle('movies_df_processed.pkl') # Note: using movies_df_processed.pkl
+        return cosine_sim, movies_df
+    except FileNotFoundError:
+        st.error("Pre-computed data files not found. Please run the precomputation script (`precompute_data.py`).")
+        st.stop() # Stop the app if crucial files are missing
+    except Exception as e:
+        st.error(f"Error loading pre-computed data: {e}")
+        st.stop()
+
+# Content-based recommender (simplified)
 class ContentBasedRecommender:
-    def __init__(self, movies_df):
+    def __init__(self, movies_df, cosine_sim_matrix):
         self.movies_df = movies_df
-        self.tfidf_matrix = None
-        self.cosine_sim = None
-        self._prepare_content_features()
-    
-    def _prepare_content_features(self):
-        """Prepare content features for recommendation"""
-        # Clean and prepare genres
-        self.movies_df['genres'] = self.movies_df['genres'].fillna('(no genres listed)')
-        self.movies_df['genres'] = self.movies_df['genres'].str.replace('|', ' ', regex=False) # Use regex=False for literal replacement
-        
-        # Create TF-IDF matrix based on genres
-        tfidf = TfidfVectorizer(stop_words='english')
-        self.tfidf_matrix = tfidf.fit_transform(self.movies_df['genres'])
-        
-        # Calculate cosine similarity
-        self.cosine_sim = cosine_similarity(self.tfidf_matrix, self.tfidf_matrix)
-    
+        self.cosine_sim = cosine_sim_matrix
+        # No need to call _prepare_content_features anymore
+
     def get_recommendations(self, movie_title, n=5):
-        """Get movie recommendations based on content similarity"""
         try:
-            # Find the exact movie
+            # The movies_df passed to init should already have its genres processed ('|' to ' ')
             idx = self.movies_df[self.movies_df['title'] == movie_title].index[0]
             
             # Get similarity scores
@@ -71,12 +73,10 @@ class ContentBasedRecommender:
             
             # If we don't have enough similar movies, add popular ones
             if len(valid_recommendations) < n:
-                # Get popular movies with genres
                 movies_with_genres = self.movies_df[
                     (self.movies_df['genres'] != '(no genres listed)') & 
                     (self.movies_df.index != idx)
                 ]
-                # To avoid errors if there are not enough popular movies, sample at most available
                 num_to_add = min(n - len(valid_recommendations), len(movies_with_genres))
                 if num_to_add > 0:
                     popular_movies = movies_with_genres.sample(n=num_to_add)
@@ -101,11 +101,6 @@ class ContentBasedRecommender:
                 return pd.DataFrame(), "Not enough movies with genre information."
 
 
-# Initialize recommender (cached)
-@st.cache_resource
-def initialize_recommender(movies_df):
-    return ContentBasedRecommender(movies_df)
-
 # Streamlit UI
 def main():
     st.set_page_config(page_title="Movie Recommendation System", page_icon="🎬", layout="wide")
@@ -113,24 +108,29 @@ def main():
     st.title("🎬 Movie Recommendation System")
     st.markdown("---")
     
-    # Download data
+    # Download raw MovieLens data (for initial display and metrics, not for recommender processing)
     try:
-        movies, ratings = download_movielens_data()
-        st.success("✅ Dataset loaded successfully!")
+        raw_movies, ratings = download_movielens_data()
+        st.success("✅ MovieLens dataset (raw) loaded successfully for metrics!")
     except Exception as e:
-        st.error(f"Error loading dataset: {str(e)}")
+        st.error(f"Error loading raw MovieLens dataset: {str(e)}")
         return
     
+    # Load pre-computed data
+    st.write("Loading pre-computed model data...")
+    cosine_sim, precomputed_movies_df = load_precomputed_data()
+    st.success("✅ Pre-computed model data loaded!")
+
     # Initialize recommender
-    content_recommender = initialize_recommender(movies)
+    content_recommender = ContentBasedRecommender(precomputed_movies_df, cosine_sim)
     
     st.header("📚 Content-Based Movie Recommendations")
     st.write("Get recommendations based on movie genres and features")
     
-    # Movie selection
+    # Movie selection uses the titles from the precomputed_movies_df
     movie_title = st.selectbox(
         "Select or type a movie title:",
-        options=movies['title'].tolist(),
+        options=precomputed_movies_df['title'].tolist(), # Use precomputed titles
     )
     
     if st.button("Get Recommendations", key="content"):
@@ -144,7 +144,7 @@ def main():
                 st.subheader(f"Top 5 movie recommendations:")
                 
                 # Show selected movie info
-                selected_movie = movies[movies['title'] == movie_title].iloc[0]
+                selected_movie = precomputed_movies_df[precomputed_movies_df['title'] == movie_title].iloc[0]
                 st.write(f"**Based on:** {movie_title}")
                 st.write(f"**Genres:** {selected_movie['genres']}")
                 st.markdown("---")
@@ -157,13 +157,13 @@ def main():
                     with col2:
                         st.write(f"*{row['genres']}*")
             else:
-                st.error("Unable to generate recommendations. Please try another movie or check dataset.")
+                st.error("Unable to generate recommendations. Please try another movie or ensure pre-computed data is valid.")
     
     # Dataset info
     with st.expander("📊 Dataset Information"):
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total Movies", len(movies))
+            st.metric("Total Movies", len(raw_movies)) # Use raw_movies for total count
         with col2:
             st.metric("Total Users", ratings['userId'].nunique())
         with col3:
@@ -171,9 +171,8 @@ def main():
         
         st.write("**Genres Distribution:**")
         # Ensure 'genres' column is processed before splitting for distribution
-        movies['genres'] = movies['genres'].fillna('(no genres listed)')
-        movies['genres'] = movies['genres'].str.replace('|', ' ', regex=False)
-        all_genres = movies['genres'].str.split(' ').explode() # Use space as delimiter after replace
+        # The precomputed_movies_df already has genres processed
+        all_genres = precomputed_movies_df['genres'].str.split(' ').explode() # Use space as delimiter after replace
         genre_counts = all_genres[all_genres != '(no genres listed)'].value_counts().head(10) # Exclude 'no genres listed' for chart
         st.bar_chart(genre_counts)
 
