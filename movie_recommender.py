@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer 
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
 import requests
@@ -42,7 +42,7 @@ class ContentBasedRecommender:
         """Prepare content features for recommendation"""
         # Clean and prepare genres
         self.movies_df['genres'] = self.movies_df['genres'].fillna('(no genres listed)')
-        self.movies_df['genres'] = self.movies_df['genres'].str.replace('|', ' ')
+        self.movies_df['genres'] = self.movies_df['genres'].str.replace('|', ' ', regex=False) # Use regex=False for literal replacement
         
         # Create TF-IDF matrix based on genres
         tfidf = TfidfVectorizer(stop_words='english')
@@ -76,18 +76,35 @@ class ContentBasedRecommender:
                     (self.movies_df['genres'] != '(no genres listed)') & 
                     (self.movies_df.index != idx)
                 ]
-                popular_movies = movies_with_genres.sample(n=n-len(valid_recommendations))
-                valid_recommendations.extend(popular_movies.index.tolist())
+                # To avoid errors if there are not enough popular movies, sample at most available
+                num_to_add = min(n - len(valid_recommendations), len(movies_with_genres))
+                if num_to_add > 0:
+                    popular_movies = movies_with_genres.sample(n=num_to_add)
+                    valid_recommendations.extend(popular_movies.index.tolist())
             
             recommendations = self.movies_df.iloc[valid_recommendations[:n]][['movieId', 'title', 'genres']]
             return recommendations, None
             
-        except Exception as e:
+        except IndexError: # More specific exception for movie not found
             movies_with_genres = self.movies_df[self.movies_df['genres'] != '(no genres listed)']
             if len(movies_with_genres) >= n:
-                return movies_with_genres.sample(n=n)[['movieId', 'title', 'genres']], "Showing popular movie recommendations"
+                return movies_with_genres.sample(n=n)[['movieId', 'title', 'genres']], "Movie not found. Showing popular movie recommendations."
             else:
-                return pd.DataFrame(), "Not enough movies with genre information"
+                return pd.DataFrame(), "Not enough movies with genre information."
+        except Exception as e:
+            # Catch other potential errors gracefully
+            st.error(f"An unexpected error occurred: {e}. Showing popular movie recommendations as a fallback.")
+            movies_with_genres = self.movies_df[self.movies_df['genres'] != '(no genres listed)']
+            if len(movies_with_genres) >= n:
+                return movies_with_genres.sample(n=n)[['movieId', 'title', 'genres']], None
+            else:
+                return pd.DataFrame(), "Not enough movies with genre information."
+
+
+# Initialize recommender (cached)
+@st.cache_resource
+def initialize_recommender(movies_df):
+    return ContentBasedRecommender(movies_df)
 
 # Streamlit UI
 def main():
@@ -105,7 +122,7 @@ def main():
         return
     
     # Initialize recommender
-    content_recommender = ContentBasedRecommender(movies)
+    content_recommender = initialize_recommender(movies)
     
     st.header("📚 Content-Based Movie Recommendations")
     st.write("Get recommendations based on movie genres and features")
@@ -140,7 +157,7 @@ def main():
                     with col2:
                         st.write(f"*{row['genres']}*")
             else:
-                st.error("Unable to generate recommendations. Please try another movie.")
+                st.error("Unable to generate recommendations. Please try another movie or check dataset.")
     
     # Dataset info
     with st.expander("📊 Dataset Information"):
@@ -153,8 +170,11 @@ def main():
             st.metric("Total Ratings", len(ratings))
         
         st.write("**Genres Distribution:**")
-        all_genres = movies['genres'].str.split('|').explode()
-        genre_counts = all_genres.value_counts().head(10)
+        # Ensure 'genres' column is processed before splitting for distribution
+        movies['genres'] = movies['genres'].fillna('(no genres listed)')
+        movies['genres'] = movies['genres'].str.replace('|', ' ', regex=False)
+        all_genres = movies['genres'].str.split(' ').explode() # Use space as delimiter after replace
+        genre_counts = all_genres[all_genres != '(no genres listed)'].value_counts().head(10) # Exclude 'no genres listed' for chart
         st.bar_chart(genre_counts)
 
 if __name__ == "__main__":
