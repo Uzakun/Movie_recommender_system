@@ -37,7 +37,7 @@ def load_precomputed_data():
     """Load pre-computed cosine similarity matrix and movies DataFrame."""
     try:
         # Explicitly set allow_pickle=True for np.load()
-        cosine_sim = np.load('cosine_sim_matrix.npy')
+        cosine_sim = np.load('cosine_sim_matrix.npy', allow_pickle=True)
         movies_df = pd.read_pickle('movies_df_processed.pkl') # This line is fine
         return cosine_sim, movies_df
     except FileNotFoundError:
